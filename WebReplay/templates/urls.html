@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Captured URLs</h2>
+
+{% if reconstructed_urls or non_reconstructed_urls %}
+
+<!-- Reconstructed Pages Table -->
+{% if reconstructed_urls %}
+<h4 class="text-success mt-4">✓ Reconstructed Pages ({{ reconstructed_urls|length }})</h4>
+<div class="table-responsive">
+    <table class="table table-dark table-striped table-hover table-translucent">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">URL</th>
+                <th scope="col">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in reconstructed_urls %}
+            <tr>
+                <th scope="row">{{ loop.index }}</th>
+                <td>
+                    <a href="{{ item.link }}" target="_blank" class="text-decoration-none text-info">
+                        {{ item.original }}
+                    </a>
+                </td>
+                <td><span class="badge bg-success">{{ item.mime_type }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Non-Reconstructed URLs Table -->
+{% if non_reconstructed_urls %}
+<h4 class="text-muted mt-4">⊗ Non-Reconstructed URLs ({{ non_reconstructed_urls|length }})</h4>
+<div class="table-responsive">
+    <table class="table table-dark table-striped table-hover table-translucent">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">URL</th>
+                <th scope="col">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in non_reconstructed_urls %}
+            <tr>
+                <th scope="row">{{ loop.index }}</th>
+                <td class="text-light">{{ item.original }}</td>
+                <td><span class="badge bg-secondary">{{ item.mime_type }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% else %}
+<p class="text-muted">No captured URLs yet.</p>
+{% endif %}
+
+{% endblock %}
