@@ -1,4 +1,0 @@
-flask
-mitmproxy
-pywin32
-beautifulsoup4
