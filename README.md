@@ -47,7 +47,7 @@ graph TD
 **System Requirements:**
 - **Python 3.x**
 - **Wireshark**: Ensure `dumpcap` is in your system PATH
-- **mitmproxy**: https://www.mitmproxy.org
+- **mitmproxy**: https://www.mitmproxy.org (only needed if pip installing does not work)
 - **Windows OS**: Required for `pywin32` event log monitoring
 
 **Python Dependencies:**
@@ -225,4 +225,5 @@ This project is available for educational and research purposes.
 ## ⚠️ Disclaimer
 
 This tool is for made for research purposes only. Always ensure you have proper authorization before capturing network traffic.
+
 
