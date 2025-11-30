@@ -60,19 +60,28 @@ pip install -r requirements.txt
 ```
 WebEMT/
 ├── app.py                          # Main Flask application entry point
+├── test.py                         # Test script for injecting Symantec events
+├── requirements.txt                # Python dependencies
+├── README.md                       # Project documentation
 ├── modules/                        # Core logic modules
 │   ├── capture_controller.py       # Manages mitmdump and dumpcap processes
 │   ├── event_listener.py           # Monitors Windows Event Logs
 │   ├── mitm_addon.py               # mitmproxy script for logging HTTP flows
 │   └── reconstructor.py            # Web page reconstruction logic
 ├── templates/                      # HTML templates for web interface
-├── static/                         # Static assets (CSS, JS)
-├── data/                           # Captured data storage
-│   ├── output/                     # JSON flows and PCAP files
-│   ├── reconstructed/              # Reconstructed static web pages
-│   └── pcap_rotating/              # Temporary rotating PCAP buffer
-├── requirements.txt                # Python dependencies
-└── README.md                       # Project documentation
+│   ├── layout.html                 # Base template layout
+│   ├── nav.html                    # Navigation component
+│   ├── homepage.html               # Dashboard/home page
+│   └── urls.html                   # Captured URLs listing page
+├── static/                         # Static assets (CSS, images)
+│   ├── styles.css                  # Application styles
+│   └── bg.png                      # Background image
+└── data/                           # Captured data storage (created at runtime)
+    ├── output/                     # JSON flows and PCAP files
+    │   ├── web/                    # HTTP flow JSON files
+    │   └── pcap/                   # Extracted PCAP files
+    ├── reconstructed/              # Reconstructed static web pages
+    └── pcap_rotating/              # Temporary rotating PCAP buffer
 ```
 
 ## 🚀 Quick Start
@@ -208,18 +217,10 @@ self.extract_http_window(10, http_out)  # Change to desired minutes
 - **Privacy**: This tool captures all web traffic through the proxy; use responsibly
 - **Windows Only**: Event log monitoring requires Windows OS
 
-## 🤝 Contributing
-
-Contributions are welcome! Areas for improvement:
-- Support for additional event sources
-- Enhanced filtering algorithms
-- Real-time threat intelligence integration
-- Cross-platform event monitoring
-
 ## 📄 License
 
 This project is available for educational and research purposes.
 
 ## ⚠️ Disclaimer
 
-This tool is for authorized security monitoring and research purposes only. Always ensure you have proper authorization before capturing network traffic.
+This tool is for made for research purposes only. Always ensure you have proper authorization before capturing network traffic.
