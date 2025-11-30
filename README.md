@@ -56,8 +56,6 @@ Web Replay is a tool designed to capture, analyze, and replay web traffic. It co
     -   **⊗ Non-Reconstructed URLs**: All other captured traffic (paginated, 10 items per page)
     -   **[CACHED]** tag indicates pages that were served from browser cache (304 status)
 
-6.  **Manual Reconstruction**: Trigger reconstruction for the latest capture by clicking "Reconstruct Latest Capture" on the homepage
-
 ## Decompression Support
 
 The reconstructor now supports:
@@ -93,4 +91,5 @@ Web pages served from browser cache (304 Not Modified) appear in the index with 
 - ✅ Pagination for non-reconstructed URLs (10 per page)
 - ✅ Cached page indicator for 304 responses
 - ✅ URL truncation with ellipsis for better table display
+
 - ✅ Red color coding for non-reconstructed URLs section
