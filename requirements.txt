@@ -2,3 +2,4 @@ flask
 mitmproxy
 pywin32
 beautifulsoup4
+brotli

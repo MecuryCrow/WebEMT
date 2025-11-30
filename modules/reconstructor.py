@@ -6,6 +6,8 @@ takes in .json web content as input and tries to reconstruct web pages from data
 
 # native libraries
 import json, base64, gzip, os, re, hashlib, argparse
+import brotli
+import zlib
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 from pathlib import Path
@@ -35,6 +37,7 @@ class Reconstructor:
         self.outputdir.mkdir(exist_ok=True)
         self.data = []
         self.resources_map={} # map URLs to local file paths; for multiple connected web pages
+        self.cached_pages = [] # list of (url, domain) tuples for cached pages
 
     def load_data(self) -> bool:
         """
@@ -72,9 +75,31 @@ class Reconstructor:
         try:
             body_bytes = base64.b64decode(b64body) # try to b64 decode first
 
-            # Check for gzip magic numbers
-            if len(body_bytes) >= 2 and body_bytes[:2] == b'\x1f\x8b':
-                body_bytes = gzip.decompress(body_bytes)
+            # Check for content encoding header
+            headers = entry.get('resp_headers', {})
+            # Normalize headers to lowercase keys
+            headers = {k.lower(): v for k, v in headers.items()}
+            encoding = headers.get('content-encoding', '').lower()
+
+            if 'br' in encoding:
+                try:
+                    body_bytes = brotli.decompress(body_bytes)
+                except brotli.error as e:
+                    print(f"Brotli decompression failed for {entry.get('url')}: {e}")
+            elif 'gzip' in encoding or (len(body_bytes) >= 2 and body_bytes[:2] == b'\x1f\x8b'):
+                try:
+                    body_bytes = gzip.decompress(body_bytes)
+                except gzip.BadGzipFile:
+                    pass # might not be gzip
+            elif 'deflate' in encoding:
+                try:
+                    body_bytes = zlib.decompress(body_bytes)
+                except zlib.error:
+                    # Try raw deflate (no zlib header)
+                    try:
+                        body_bytes = zlib.decompress(body_bytes, -15)
+                    except zlib.error:
+                        pass
 
             return body_bytes
         except Exception as e:
@@ -428,6 +453,13 @@ class Reconstructor:
 
             # only process successful status codes
             status = i.get('status_code', 0)
+            
+            # Handle cached pages (304)
+            if status == 304:
+                parsed = urlparse(url)
+                self.cached_pages.append((url, parsed.netloc))
+                continue
+
             if status not in range(200, 300):
                 continue
 
@@ -514,32 +546,39 @@ class Reconstructor:
                     else:
                         resource_count += 1
 
+        # Add cached pages to domains
+        for url, domain in self.cached_pages:
+            if domain not in domains:
+                domains[domain] = []
+            # Add with a special marker to identify it as cached
+            domains[domain].append(f"CACHED:{url}")
+
         # add domains to index
         for domain, files in sorted(domains.items()):
             index_html += f'    <div class="domain">\n'
             index_html += f'        <h2>🌐 {domain}</h2>\n'
             index_html += f'        <ul>\n'
             
-            # Sort HTML files first
-            files.sort(key=lambda x: (not x.endswith('.html'), x))
+            # Filter for HTML files only
+            html_files = [f for f in files if f.endswith('.html')]
+            if not html_files:
+                continue
+
+            html_files.sort()
             
-            for file in files[:20]:  # Limit to 20 files per domain
-                file_type = ''
-                if file.endswith('.html'):
-                    file_type = ' <span class="file-type">[HTML]</span>'
-                elif file.endswith('.js'):
-                    file_type = ' <span class="file-type">[JS]</span>'
-                elif file.endswith('.json'):
-                    file_type = ' <span class="file-type">[JSON]</span>'
-                elif file.endswith(('.gif', '.jpg', '.png')):
-                    file_type = ' <span class="file-type">[IMG]</span>'
-                
+            for file in html_files[:20]:  # Limit to 20 files per domain
                 # Truncate long filenames for display
                 display_name = file if len(file) <= 80 else file[:77] + '...'
-                index_html += f'            <li><a href="{file}" title="{file}">{display_name}</a>{file_type}</li>\n'
+                
+                if file.startswith("CACHED:"):
+                    url = file.replace("CACHED:", "")
+                    display_name = url if len(url) <= 80 else url[:77] + '...'
+                    index_html += f'            <li><span style="color: #888;">{display_name}</span> <span class="file-type" style="background: #eee; color: #666;" title="Content was cached (304 Not Modified) and could not be reconstructed">[CACHED]</span></li>\n'
+                else:
+                    index_html += f'            <li><a href="{file}" title="{file}">{display_name}</a></li>\n'
             
-            if len(files) > 20:
-                index_html += f'            <li><em>... and {len(files) - 20} more files</em></li>\n'
+            if len(html_files) > 20:
+                index_html += f'            <li><em>... and {len(html_files) - 20} more files</em></li>\n'
             
             index_html += f'        </ul>\n'
             index_html += f'    </div>\n'

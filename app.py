@@ -2,6 +2,7 @@ import os
 import json
 import base64
 import time
+import mimetypes
 from flask import Flask, render_template, send_file, request, send_from_directory
 from modules.capture_controller import CaptureController
 from modules.event_listener import EventListener
@@ -34,6 +35,9 @@ def home():
 # URL LIST PAGE
 @app.route("/urls")
 def urls_page():
+    # Get page parameter for pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Items per page for non-reconstructed URLs
     output_dir = os.path.join("data", "output", "web")
     if not os.path.isdir(output_dir):
         return render_template("urls.html", urls=None)
@@ -67,6 +71,52 @@ def urls_page():
     reconstructed_urls = []
     non_reconstructed_urls = []
     
+    def is_real_webpage(url, mime_type):
+        """
+        Filter out non-webpage HTML content like ads, APIs, and iframes.
+        Returns True only for actual user-facing web pages.
+        """
+        if 'html' not in mime_type.lower():
+            return False
+        
+        url_lower = url.lower()
+        
+        # Exclude ad and tracking domains
+        ad_domains = [
+            'doubleclick', 'googlesyndication', 'googleadservices',
+            'ads.', 'adservice', 'safeframe', 'bbloader', 'trustedframe',
+            'advertising', 'googletagmanager', 'googletagservices'
+        ]
+        if any(domain in url_lower for domain in ad_domains):
+            return False
+        
+        # Exclude API endpoints
+        api_keywords = [
+            '/api/', '/suggest', '/autocomplete', '/complete/search',
+            '/xhr/', '/ajax/', '/graphql', '/rpc/', '/webapi/',
+            'clients6.youtube.com'  # YouTube suggestion API
+        ]
+        if any(keyword in url_lower for keyword in api_keywords):
+            return False
+        
+        # Exclude tracking and analytics
+        tracking_keywords = [
+            '/tracking/', '/analytics/', '/beacon/', '/pixel/',
+            '/logstreamz', '/jserror', '/cspreport', '/gen_204'
+        ]
+        if any(keyword in url_lower for keyword in tracking_keywords):
+            return False
+        
+        # Exclude embedded iframes and widgets
+        iframe_keywords = [
+            '/iframe/', '/embed/', '/widget/', '/frame/',
+            'syncframe', 'hovercard'
+        ]
+        if any(keyword in url_lower for keyword in iframe_keywords):
+            return False
+        
+        return True
+    
     for u in sorted_urls:
         flow = next((f for f in flows if f.get("url") == u), None)
         mime_type = flow.get("mime_type", "") if flow else ""
@@ -90,14 +140,26 @@ def urls_page():
         }
         
         if file_exists:
-            reconstructed_urls.append(url_item)
+            # Only show real web pages, not ads/APIs/iframes
+            if is_real_webpage(u, mime_type):
+                reconstructed_urls.append(url_item)
         else:
             non_reconstructed_urls.append(url_item)
+
+    # Pagination for non-reconstructed URLs
+    total_non_reconstructed = len(non_reconstructed_urls)
+    total_pages = (total_non_reconstructed + per_page - 1) // per_page  # Ceiling division
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_non_reconstructed = non_reconstructed_urls[start_idx:end_idx]
 
     return render_template(
         "urls.html",
         reconstructed_urls=reconstructed_urls,
-        non_reconstructed_urls=non_reconstructed_urls
+        non_reconstructed_urls=paginated_non_reconstructed,
+        current_page=page,
+        total_pages=total_pages,
+        total_non_reconstructed=total_non_reconstructed
     )
 
 
@@ -105,7 +167,17 @@ def urls_page():
 @app.route("/reconstructed/<path:filename>")
 def serve_reconstructed(filename):
     reconstructed_dir = os.path.join(os.getcwd(), "data", "reconstructed")
-    return send_from_directory(reconstructed_dir, filename)
+    
+    # Detect MIME type
+    mime_type, _ = mimetypes.guess_type(filename)
+    if mime_type is None:
+        # Default to HTML for files without extension
+        if not '.' in os.path.basename(filename):
+            mime_type = 'text/html'
+        else:
+            mime_type = 'application/octet-stream'
+    
+    return send_from_directory(reconstructed_dir, filename, mimetype=mime_type)
 
 
 
