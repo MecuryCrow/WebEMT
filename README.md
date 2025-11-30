@@ -84,12 +84,3 @@ Web pages served from browser cache (304 Not Modified) appear in the index with 
     -   `reconstructed/`: Reconstructed static web pages
     -   `pcap_rotating/`: Temporary rotating PCAP buffer
 
-## Recent Improvements
-
-- ✅ Fixed garbled text issue with Brotli/deflate compressed pages
-- ✅ Intelligent webpage filtering (excludes ads, APIs, iframes, tracking)
-- ✅ Pagination for non-reconstructed URLs (10 per page)
-- ✅ Cached page indicator for 304 responses
-- ✅ URL truncation with ellipsis for better table display
-
-- ✅ Red color coding for non-reconstructed URLs section
