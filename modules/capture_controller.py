@@ -116,9 +116,6 @@ class CaptureController:
             if not line:
                 continue
 
-            # Debugging (optional):
-            # print("[mitmdump RAW]", line)
-
             try:
                 obj = json.loads(line)
                 obj["timestamp"] = time.time()
@@ -156,7 +153,6 @@ class CaptureController:
                 stderr=subprocess.DEVNULL
             )
         except FileNotFoundError:
-            print("[ERROR] dumpcap not found in PATH!")
             print("[ERROR] dumpcap not found in PATH! Continuing without packet capture.")
             self.dumpcap_proc = None
 
@@ -220,7 +216,6 @@ class CaptureController:
         http_out = os.path.join(self.output_web, f"http_future10_{timestamp}.json")
         pcap_out = os.path.join(self.output_pcap, f"pcap_future10_{timestamp}.pcapng")
 
-        self.extract_http_window(10, http_out)
         self.extract_http_window(10, http_out)
         self.extract_pcap_window(pcap_out)
 

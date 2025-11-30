@@ -180,9 +180,6 @@ def serve_reconstructed(filename):
     return send_from_directory(reconstructed_dir, filename, mimetype=mime_type)
 
 
-
-
-
 # DOWNLOAD LATEST PCAP
 @app.route("/download/pcap")
 def download_pcap():

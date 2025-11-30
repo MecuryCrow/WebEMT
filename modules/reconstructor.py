@@ -36,8 +36,8 @@ class Reconstructor:
         self.outputdir = Path(outputdir)
         self.outputdir.mkdir(exist_ok=True)
         self.data = []
-        self.resources_map={} # map URLs to local file paths; for multiple connected web pages
-        self.cached_pages = [] # list of (url, domain) tuples for cached pages
+        self.resources_map = {}
+        self.cached_pages = []
 
     def load_data(self) -> bool:
         """
@@ -73,7 +73,7 @@ class Reconstructor:
             return None
         
         try:
-            body_bytes = base64.b64decode(b64body) # try to b64 decode first
+            body_bytes = base64.b64decode(b64body)
 
             # Check for content encoding header
             headers = entry.get('resp_headers', {})
@@ -90,7 +90,7 @@ class Reconstructor:
                 try:
                     body_bytes = gzip.decompress(body_bytes)
                 except gzip.BadGzipFile:
-                    pass # might not be gzip
+                    pass
             elif 'deflate' in encoding:
                 try:
                     body_bytes = zlib.decompress(body_bytes)
@@ -153,7 +153,7 @@ class Reconstructor:
 
         # create dir for domain
         domain_dir = self.outputdir / self.sanitise_filename(parsed.netloc.replace(':','_'))
-        domain_dir.mkdir(exist_ok=True) # don't raise errors if directory already exists
+        domain_dir.mkdir(exist_ok=True)
 
         # parse path & query separately
         path = parsed.path.strip('/')
@@ -221,10 +221,10 @@ class Reconstructor:
             if len(path_parts) > 1:
                 # create subdirs
                 subdir = domain_dir
-                for i in path_parts[:-1]: # for each part in path_parts,
-                    subdir = subdir / i # create subdirectory for them
+                for i in path_parts[:-1]:
+                    subdir = subdir / i
                     try:
-                        subdir.mkdir(exist_ok=True) # don't raise errors if it already exists
+                        subdir.mkdir(exist_ok=True)
                     except OSError as e:
                         # if cannot create directory, flatten directory structure
                         print(f"Error: Cannot create deep directory, flattening: {e}")
@@ -288,7 +288,7 @@ class Reconstructor:
             ]
 
             for tagname, attrname in tag_attr_pairs:
-                for i in soup.find_all(tagname): # iterate thru tag names
+                for i in soup.find_all(tagname):
                     originalurl = i.get(attrname)
                     if originalurl:
                         # skip data URL and anchor
@@ -349,7 +349,7 @@ class Reconstructor:
             }
         }
 
-        for i in self.data: # iterate thru entries
+        for i in self.data:
             # methods
             method = i.get('method', 'unknown')
             stats['methods'][method]=stats['methods'].get(method, 0) + 1

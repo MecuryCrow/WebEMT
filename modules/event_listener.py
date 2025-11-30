@@ -17,7 +17,6 @@ class EventListener:
         self.source = "Symantec AntiVirus"
         self.poll_interval = 1
 
-    # Public start() method (used by app.py)
     def start(self):
         if self.thread and self.thread.is_alive():
             print("[!] EventListener already running.")
@@ -26,7 +25,6 @@ class EventListener:
         self.thread = threading.Thread(target=self._listen_loop, daemon=True)
         self.thread.start()
 
-    # Stop listener
     def stop(self):
         self.running = False
         if self.handle:
@@ -34,7 +32,6 @@ class EventListener:
             self.handle = None
             print("[+] Event listener stopped.")
 
-    # Internal listen loop
     def _listen_loop(self):
         try:
             self.handle = win32evtlog.OpenEventLog(None, self.log_name)
@@ -62,7 +59,6 @@ class EventListener:
         finally:
             self.stop()
 
-    # Event Parser
     def _parse_event(self, event) -> Dict[str, Any]:
         return {
             'event_id': event.EventID,
